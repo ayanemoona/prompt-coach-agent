@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 from models.state import PromptState
-from utils.parser import detect_domain, detect_prompt_elements, normalize_text
+from utils.text import normalize_text
 
 
 def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:

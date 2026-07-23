@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from models.state import PromptState
-from utils.parser import is_vague_value
 
 
 ELEMENT_LABELS = {
