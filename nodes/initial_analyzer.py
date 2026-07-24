@@ -7,6 +7,7 @@ from models.state import PromptState
 from prompts.analyzer_prompt import ANALYZER_PROMPT
 from utils.llm import ask_llm, is_llm_configured
 from utils.text import normalize_text
+from utils.state_updater import update_state
 
 
 def analyze_initial_prompt(user_prompt: str) -> PromptState:
@@ -18,41 +19,16 @@ def analyze_initial_prompt(user_prompt: str) -> PromptState:
 
     if is_llm_configured():
         try:
-            analysis = analyze_prompt_with_llm(prompt)
-            apply_analysis_to_state(state, analysis)
+            analysis = analyze_prompt(prompt)
+            update_state(state, analysis)
             return state
-        except Exception:
-            pass
+        except Exception as error:
+            raise RuntimeError("Initial analyzer failed to analyze prompt with LLM.") from error
 
-    apply_rule_based_analysis(state, prompt)
-    return state
+    raise RuntimeError("OPENAI_API_KEY is not configured. Initial analyzer requires LLM.")
 
 
-def analyze_prompt_with_llm(prompt: str) -> dict:
+def analyze_prompt(prompt: str) -> dict:
     llm_prompt = ANALYZER_PROMPT.format(user_prompt=prompt)
     response = ask_llm(llm_prompt)
     return json.loads(response)
-
-
-def apply_analysis_to_state(state: PromptState, analysis: dict) -> None:
-    state["domain"] = analysis.get("domain")
-
-    prompt_elements = analysis.get("prompt_elements", {})
-    for element_name, element_value in prompt_elements.items():
-        if element_name not in state["prompt_elements"]:
-            continue
-
-        state["prompt_elements"][element_name]["value"] = element_value.get("value")
-        state["prompt_elements"][element_name]["confirmed"] = bool(
-            element_value.get("confirmed")
-        )
-
-
-def apply_rule_based_analysis(state: PromptState, prompt: str) -> None:
-    state["domain"] = detect_domain(prompt)
-
-    detected_elements = detect_prompt_elements(prompt)
-    for element_name, value in detected_elements.items():
-        if element_name in state["prompt_elements"]:
-            state["prompt_elements"][element_name]["value"] = value
-            state["prompt_elements"][element_name]["confirmed"] = value is not None
