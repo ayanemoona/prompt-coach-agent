@@ -13,7 +13,6 @@ from prompts.analyzer_prompt import (
 )
 from utils.llm import ask_llm, is_llm_configured
 from utils.state_updater import update_current_state, update_initial_state
-from utils.text import normalize_text
 
 
 def analyze_prompt(state: PromptState, user_input: str) -> PromptState:
@@ -24,17 +23,16 @@ def analyze_prompt(state: PromptState, user_input: str) -> PromptState:
 
 
 def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
-    prompt = normalize_text(user_prompt)
     next_state: PromptState = deepcopy(state)
-    next_state["original_prompt"] = prompt
-    next_state["current_prompt"] = prompt
+    next_state["original_prompt"] = user_prompt
+    next_state["current_prompt"] = user_prompt
 
     if is_llm_configured():
         try:
             analysis = run_analysis(
                 INITIAL_ANALYSIS_MODE,
                 INITIAL_OUTPUT_SCHEMA,
-                prompt,
+                user_prompt,
             )
             update_initial_state(next_state, analysis)
             return next_state
@@ -45,16 +43,15 @@ def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
 
 
 def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
-    new_prompt = normalize_text(user_input)
     next_state: PromptState = deepcopy(state)
-    next_state["current_prompt"] = new_prompt
+    next_state["current_prompt"] = user_input
 
     if is_llm_configured():
         try:
             analysis = run_analysis(
                 CURRENT_ANALYSIS_MODE,
                 CURRENT_OUTPUT_SCHEMA,
-                new_prompt,
+                user_input,
             )
             update_current_state(next_state, analysis)
             return next_state
