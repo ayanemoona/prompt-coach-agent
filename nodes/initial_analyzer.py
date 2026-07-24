@@ -4,10 +4,10 @@ import json
 
 from models.initial_state import create_initial_state
 from models.state import PromptState
-from prompts.analyzer_prompt import ANALYZER_PROMPT
+from prompts.initial_analyzer_prompt import INITIAL_ANALYZER_PROMPT
 from utils.llm import ask_llm, is_llm_configured
 from utils.text import normalize_text
-from utils.state_updater import update_state
+from utils.state_updater import update_initial_state
 
 
 def analyze_initial_prompt(user_prompt: str) -> PromptState:
@@ -20,7 +20,7 @@ def analyze_initial_prompt(user_prompt: str) -> PromptState:
     if is_llm_configured():
         try:
             analysis = analyze_prompt(prompt)
-            update_state(state, analysis)
+            update_initial_state(state, analysis)
             return state
         except Exception as error:
             raise RuntimeError("Initial analyzer failed to analyze prompt with LLM.") from error
@@ -29,6 +29,6 @@ def analyze_initial_prompt(user_prompt: str) -> PromptState:
 
 
 def analyze_prompt(prompt: str) -> dict:
-    llm_prompt = ANALYZER_PROMPT.format(user_prompt=prompt)
+    llm_prompt = INITIAL_ANALYZER_PROMPT.format(user_prompt=prompt)
     response = ask_llm(llm_prompt)
     return json.loads(response)

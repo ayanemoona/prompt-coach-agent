@@ -11,42 +11,42 @@ def create_initial_state() -> PromptState:
 
             "role": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "context": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "goal": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "constraints": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "output": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "examples": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "reasoning": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             },
 
             "evaluation": {
                 "value": None,
-                "confirmed": False
+                "existed_initially": False
             }
         }
     }
