@@ -4,10 +4,44 @@ import json
 from copy import deepcopy
 
 from models.state import PromptState
-from prompts.analyzer_prompt import RESPONSE_ANALYZER_PROMPT
+from prompts.analyzer_prompt import (
+    ANALYZER_PROMPT,
+    CURRENT_ANALYSIS_MODE,
+    CURRENT_OUTPUT_SCHEMA,
+    INITIAL_ANALYSIS_MODE,
+    INITIAL_OUTPUT_SCHEMA,
+)
 from utils.llm import ask_llm, is_llm_configured
-from utils.state_updater import update_current_state
+from utils.state_updater import update_current_state, update_initial_state
 from utils.text import normalize_text
+
+
+def analyze_prompt(state: PromptState, user_input: str) -> PromptState:
+    if state["original_prompt"] is None:
+        return analyze_initial_prompt(state, user_input)
+
+    return analyze_user_revision(state, user_input)
+
+
+def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
+    prompt = normalize_text(user_prompt)
+    next_state: PromptState = deepcopy(state)
+    next_state["original_prompt"] = prompt
+    next_state["current_prompt"] = prompt
+
+    if is_llm_configured():
+        try:
+            analysis = run_analysis(
+                INITIAL_ANALYSIS_MODE,
+                INITIAL_OUTPUT_SCHEMA,
+                prompt,
+            )
+            update_initial_state(next_state, analysis)
+            return next_state
+        except Exception as error:
+            raise RuntimeError("Initial analyzer failed to analyze prompt with LLM.") from error
+
+    raise RuntimeError("OPENAI_API_KEY is not configured. Analyzer requires LLM.")
 
 
 def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
@@ -17,16 +51,25 @@ def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
 
     if is_llm_configured():
         try:
-            analysis = analyze_revision(new_prompt)
+            analysis = run_analysis(
+                CURRENT_ANALYSIS_MODE,
+                CURRENT_OUTPUT_SCHEMA,
+                new_prompt,
+            )
             update_current_state(next_state, analysis)
             return next_state
         except Exception as error:
             raise RuntimeError("Response analyzer failed to analyze prompt with LLM.") from error
 
-    raise RuntimeError("OPENAI_API_KEY is not configured. Response analyzer requires LLM.")
+    raise RuntimeError("OPENAI_API_KEY is not configured. Analyzer requires LLM.")
 
 
-def analyze_revision(prompt: str) -> dict:
-    llm_prompt = RESPONSE_ANALYZER_PROMPT.format(user_prompt=prompt)
+def run_analysis(analysis_mode: str, output_schema: str, user_prompt: str) -> dict:
+    llm_prompt = (
+        ANALYZER_PROMPT
+        .replace("{analysis_mode}", analysis_mode)
+        .replace("{output_schema}", output_schema)
+        .replace("{user_prompt}", user_prompt)
+    )
     response = ask_llm(llm_prompt)
     return json.loads(response)

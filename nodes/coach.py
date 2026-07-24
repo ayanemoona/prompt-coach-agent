@@ -37,6 +37,14 @@ QUESTIONS = {
 }
 
 
+def is_vague_value(value: str | None) -> bool:
+    if not value:
+        return True
+
+    compact = value.strip()
+    return len(compact) < 20 or len(compact.split()) < 4
+
+
 def create_coaching_message(state: PromptState) -> str:
     target = select_next_element(state)
     if target is None:

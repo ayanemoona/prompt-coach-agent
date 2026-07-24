@@ -1,12 +1,15 @@
-RESPONSE_ANALYZER_PROMPT = """
-너는 Response Prompt Analyzer다.
-사용자가 수정한 최신 프롬프트를 읽고, 현재 프롬프트에 들어있는 요소의 value만 분석한다.
+ANALYZER_PROMPT = """
+너는 Prompt Analyzer다.
+사용자의 프롬프트를 읽고, PromptState의 빈 칸에 끼워 넣을 분석값만 만든다.
 
 중요:
 - PromptState 전체를 만들지 않는다.
 - original_prompt, current_prompt는 코드가 직접 관리한다.
-- existed_initially는 처음 프롬프트에 있었는지를 뜻하므로 수정 분석에서는 판단하지 않는다.
-- 너는 domain과 prompt_elements의 value만 반환한다.
+- 너는 domain과 prompt_elements 안에 들어갈 값만 반환한다.
+- 분석 모드 지시를 반드시 따른다.
+
+분석 모드:
+{analysis_mode}
 
 분석할 요소는 아래 8개다.
 - role: AI에게 부여한 역할
@@ -27,6 +30,46 @@ RESPONSE_ANALYZER_PROMPT = """
 - 반드시 JSON만 출력한다.
 
 출력 형식:
+{output_schema}
+
+사용자 프롬프트:
+{user_prompt}
+""".strip()
+
+
+INITIAL_ANALYSIS_MODE = """
+초기 분석이다.
+- existed_initially는 "처음 프롬프트에 이 요소가 있었는가"를 의미한다.
+- 처음 프롬프트에 확인 가능한 요소는 existed_initially를 true로 둔다.
+- 없는 요소는 value를 null, existed_initially를 false로 둔다.
+""".strip()
+
+
+CURRENT_ANALYSIS_MODE = """
+수정 분석이다.
+- existed_initially는 처음 프롬프트에 있었는지를 뜻하므로 판단하지 않는다.
+- 현재 수정된 프롬프트에 들어있는 요소의 value만 분석한다.
+""".strip()
+
+
+INITIAL_OUTPUT_SCHEMA = """
+{
+  "domain": "짧은 한국어 명사구",
+  "prompt_elements": {
+    "role": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "context": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "goal": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "constraints": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "output": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "examples": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "reasoning": {"value": null 또는 문자열, "existed_initially": true 또는 false},
+    "evaluation": {"value": null 또는 문자열, "existed_initially": true 또는 false}
+  }
+}
+""".strip()
+
+
+CURRENT_OUTPUT_SCHEMA = """
 {
   "domain": "짧은 한국어 명사구",
   "prompt_elements": {
@@ -40,7 +83,4 @@ RESPONSE_ANALYZER_PROMPT = """
     "evaluation": {"value": null 또는 문자열}
   }
 }
-
-수정된 최신 프롬프트:
-{user_prompt}
 """.strip()

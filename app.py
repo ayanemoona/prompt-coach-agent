@@ -1,6 +1,6 @@
-from nodes.analyzer import analyze_user_revision
+from models.initial_state import create_initial_state
+from nodes.analyzer import analyze_prompt
 from nodes.coach import create_coaching_message
-from nodes.initial_analyzer import analyze_initial_prompt
 from nodes.reviewer import review_prompt_progress
 
 
@@ -19,7 +19,8 @@ def main() -> None:
         print("프롬프트가 비어 있어 종료합니다.")
         return
 
-    state = analyze_initial_prompt(user_prompt)
+    state = create_initial_state()
+    state = analyze_prompt(state, user_prompt)
 
     while True:
         print()
@@ -42,7 +43,7 @@ def main() -> None:
             print("빈 입력은 반영하지 않습니다.")
             continue
 
-        state = analyze_user_revision(state, user_input)
+        state = analyze_prompt(state, user_input)
 
 
 if __name__ == "__main__":
