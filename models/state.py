@@ -2,7 +2,7 @@ from typing import TypedDict
 
 class PromptElement(TypedDict):
     value: str | None
-    confirmed: bool
+    existed_initially: bool
 
 
 class PromptState(TypedDict):

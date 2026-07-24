@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from models.state import PromptState
-from utils.parser import is_vague_value
 
 
 ELEMENT_LABELS = {
@@ -36,6 +35,14 @@ QUESTIONS = {
     "reasoning": "답변에 이유, 판단 과정, 단계별 풀이가 필요한지 정해 주세요.",
     "evaluation": "좋은 답변인지 판단할 기준을 추가해 주세요.",
 }
+
+
+def is_vague_value(value: str | None) -> bool:
+    if not value:
+        return True
+
+    compact = value.strip()
+    return len(compact) < 20 or len(compact.split()) < 4
 
 
 def create_coaching_message(state: PromptState) -> str:
