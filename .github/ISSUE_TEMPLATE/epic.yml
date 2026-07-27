@@ -1,0 +1,49 @@
+name: "EPIC"
+description: "여러 이슈/PR로 나누어 진행할 큰 작업을 정의합니다."
+title: "[EPIC] "
+labels: ["epic"]
+body:
+  - type: textarea
+    attributes:
+      label: 🎯 목표
+      description: 이 EPIC이 해결하려는 문제와 최종 상태를 적어주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🚨 현재 문제
+      description: 지금 어떤 리스크나 불편이 있는지 적어주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: ✅ 완료 기준
+      description: EPIC을 닫을 수 있는 조건을 체크리스트로 적어주세요.
+      value: |
+        - [ ] 완료 기준 1
+        - [ ] 완료 기준 2
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 🧩 하위 작업
+      description: 하위 이슈나 PR 단위 작업을 체크리스트로 관리해주세요.
+      value: |
+        - [ ] 하위 이슈 생성
+        - [ ] 1차 PR
+        - [ ] 회귀 검증
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 📚 참고 문서
+      description: 관련 docs 경로, 논의 링크, PR, 장애 기록 등을 적어주세요.
+
+  - type: textarea
+    attributes:
+      label: ⚠️ 주의사항
+      description: 마이그레이션, 호환성, 운영 영향, 프론트 영향 등을 적어주세요.

@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+
 class PromptElement(TypedDict):
     value: str | None
     existed_initially: bool
