@@ -2,41 +2,49 @@
   "principles": [
     {
       "id": "P01",
+      "key": "role",
       "name": "Role",
       "file": "01_role.md"
     },
     {
       "id": "P02",
+      "key": "context",
       "name": "Context",
       "file": "02_context.md"
     },
     {
       "id": "P03",
+      "key": "goal",
       "name": "Goal",
       "file": "03_goal.md"
     },
     {
       "id": "P04",
+      "key": "constraints",
       "name": "Constraints",
       "file": "04_constraints.md"
     },
     {
       "id": "P05",
+      "key": "output",
       "name": "Output Format",
       "file": "05_output.md"
     },
     {
       "id": "P06",
+      "key": "examples",
       "name": "Examples (Few-shot)",
       "file": "06_examples.md"
     },
     {
       "id": "P07",
+      "key": "reasoning",
       "name": "Reasoning (Chain of Thought)",
       "file": "07_reasoning.md"
     },
     {
       "id": "P08",
+      "key": "evaluation",
       "name": "Evaluation",
       "file": "08_evaluation.md"
     }
