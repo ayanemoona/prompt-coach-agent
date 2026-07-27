@@ -15,5 +15,18 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "black>=26.5.1",
+    "flake8>=7.3.0",
     "ipykernel>=6.30.1",
+    "isort>=8.0.1",
+    "mypy>=2.3.0",
+    "pre-commit>=4.6.1",
 ]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
