@@ -37,7 +37,9 @@ def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
             update_initial_state(next_state, analysis)
             return next_state
         except Exception as error:
-            raise RuntimeError("Initial analyzer failed to analyze prompt with LLM.") from error
+            raise RuntimeError(
+                "Initial analyzer failed to analyze prompt with LLM."
+            ) from error
 
     raise RuntimeError("OPENAI_API_KEY is not configured. Analyzer requires LLM.")
 
@@ -56,15 +58,16 @@ def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
             update_current_state(next_state, analysis)
             return next_state
         except Exception as error:
-            raise RuntimeError("Response analyzer failed to analyze prompt with LLM.") from error
+            raise RuntimeError(
+                "Response analyzer failed to analyze prompt with LLM."
+            ) from error
 
     raise RuntimeError("OPENAI_API_KEY is not configured. Analyzer requires LLM.")
 
 
 def run_analysis(analysis_mode: str, output_schema: str, user_prompt: str) -> dict:
     llm_prompt = (
-        ANALYZER_PROMPT
-        .replace("{analysis_mode}", analysis_mode)
+        ANALYZER_PROMPT.replace("{analysis_mode}", analysis_mode)
         .replace("{output_schema}", output_schema)
         .replace("{user_prompt}", user_prompt)
     )

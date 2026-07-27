@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 
-
 DEFAULT_MODEL = "gpt-4.1-mini"
 
 
@@ -18,7 +17,9 @@ def is_llm_configured() -> bool:
 
 def create_llm(model: str = DEFAULT_MODEL, temperature: float = 0) -> ChatOpenAI:
     if not is_llm_configured():
-        raise RuntimeError("OPENAI_API_KEY is not configured. Add it to your .env file.")
+        raise RuntimeError(
+            "OPENAI_API_KEY is not configured. Add it to your .env file."
+        )
 
     return ChatOpenAI(
         model=model,

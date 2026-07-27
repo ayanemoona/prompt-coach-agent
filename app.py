@@ -3,7 +3,6 @@ from nodes.analyzer import analyze_prompt
 from nodes.coach import create_coaching_message
 from nodes.reviewer import review_prompt_progress
 
-
 EXIT_COMMANDS = {"exit", "quit", "q", "종료"}
 REVIEW_COMMANDS = {"review", "리뷰", "done", "완료"}
 
