@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import os
+from typing import TypeVar
 
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 
 DEFAULT_MODEL = "gpt-4.1-mini"
+StructuredResult = TypeVar("StructuredResult", bound=BaseModel)
 
 
 load_dotenv()
@@ -31,3 +34,18 @@ def ask_llm(prompt: str, model: str = DEFAULT_MODEL) -> str:
     llm = create_llm(model=model)
     response = llm.invoke(prompt)
     return response.content
+
+
+def ask_structured(
+    prompt: str,
+    schema: type[StructuredResult],
+    model: str = DEFAULT_MODEL,
+) -> StructuredResult:
+    llm = create_llm(model=model)
+    structured_llm = llm.with_structured_output(schema)
+    response = structured_llm.invoke(prompt)
+
+    if not isinstance(response, schema):
+        raise RuntimeError(f"LLM response did not match {schema.__name__}.")
+
+    return response
