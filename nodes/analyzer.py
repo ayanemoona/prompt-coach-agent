@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 from copy import deepcopy
+from typing import TypeAlias
 
+from models.analysis import CurrentAnalysis, InitialAnalysis
 from models.state import PromptState
 from prompts.analyzer_prompt import (
     ANALYZER_PROMPT,
@@ -11,8 +12,10 @@ from prompts.analyzer_prompt import (
     INITIAL_ANALYSIS_MODE,
     INITIAL_OUTPUT_SCHEMA,
 )
-from utils.llm import ask_llm, is_llm_configured
+from utils.llm import ask_structured, is_llm_configured
 from utils.state_updater import update_current_state, update_initial_state
+
+AnalysisSchema: TypeAlias = type[InitialAnalysis] | type[CurrentAnalysis]
 
 
 def analyze_prompt(state: PromptState, user_input: str) -> PromptState:
@@ -23,7 +26,7 @@ def analyze_prompt(state: PromptState, user_input: str) -> PromptState:
 
 
 def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
-    next_state: PromptState = deepcopy(state)
+    next_state: PromptState = deepcopy(state)  # 복사본 수정
     next_state["original_prompt"] = user_prompt
     next_state["current_prompt"] = user_prompt
 
@@ -33,6 +36,7 @@ def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
                 INITIAL_ANALYSIS_MODE,
                 INITIAL_OUTPUT_SCHEMA,
                 user_prompt,
+                InitialAnalysis,
             )
             update_initial_state(next_state, analysis)
             return next_state
@@ -54,6 +58,7 @@ def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
                 CURRENT_ANALYSIS_MODE,
                 CURRENT_OUTPUT_SCHEMA,
                 user_input,
+                CurrentAnalysis,
             )
             update_current_state(next_state, analysis)
             return next_state
@@ -65,11 +70,16 @@ def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
     raise RuntimeError("OPENAI_API_KEY is not configured. Analyzer requires LLM.")
 
 
-def run_analysis(analysis_mode: str, output_schema: str, user_prompt: str) -> dict:
+def run_analysis(
+    analysis_mode: str,
+    output_schema: str,
+    user_prompt: str,
+    schema: AnalysisSchema,
+) -> dict:
     llm_prompt = (
         ANALYZER_PROMPT.replace("{analysis_mode}", analysis_mode)
         .replace("{output_schema}", output_schema)
         .replace("{user_prompt}", user_prompt)
     )
-    response = ask_llm(llm_prompt)
-    return json.loads(response)
+    response = ask_structured(llm_prompt, schema)
+    return response.model_dump()
