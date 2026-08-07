@@ -22,6 +22,8 @@ def analyze_prompt(
     state: PromptState,
     user_input: str,
     *,
+    experiment: str | None = None,
+    case_id: str | None = None,
     session_id: str | None = None,
     turn_index: int | None = None,
 ) -> PromptState:
@@ -29,6 +31,8 @@ def analyze_prompt(
         return analyze_initial_prompt(
             state,
             user_input,
+            experiment=experiment,
+            case_id=case_id,
             session_id=session_id,
             turn_index=turn_index,
         )
@@ -36,6 +40,8 @@ def analyze_prompt(
     return analyze_user_revision(
         state,
         user_input,
+        experiment=experiment,
+        case_id=case_id,
         session_id=session_id,
         turn_index=turn_index,
     )
@@ -45,6 +51,8 @@ def analyze_initial_prompt(
     state: PromptState,
     user_prompt: str,
     *,
+    experiment: str | None = None,
+    case_id: str | None = None,
     session_id: str | None = None,
     turn_index: int | None = None,
 ) -> PromptState:
@@ -60,6 +68,8 @@ def analyze_initial_prompt(
                 user_prompt,
                 InitialAnalysis,
                 node="analyzer.initial",
+                experiment=experiment,
+                case_id=case_id,
                 session_id=session_id,
                 turn_index=turn_index,
             )
@@ -77,6 +87,8 @@ def analyze_user_revision(
     state: PromptState,
     user_input: str,
     *,
+    experiment: str | None = None,
+    case_id: str | None = None,
     session_id: str | None = None,
     turn_index: int | None = None,
 ) -> PromptState:
@@ -91,6 +103,8 @@ def analyze_user_revision(
                 user_input,
                 CurrentAnalysis,
                 node="analyzer.revision",
+                experiment=experiment,
+                case_id=case_id,
                 session_id=session_id,
                 turn_index=turn_index,
             )
@@ -111,6 +125,8 @@ def run_analysis(
     schema: AnalysisSchema,
     *,
     node: str,
+    experiment: str | None = None,
+    case_id: str | None = None,
     session_id: str | None = None,
     turn_index: int | None = None,
 ) -> dict:
@@ -123,6 +139,8 @@ def run_analysis(
         llm_prompt,
         schema,
         node=node,
+        experiment=experiment,
+        case_id=case_id,
         session_id=session_id,
         turn_index=turn_index,
         input_chars=len(user_prompt),
