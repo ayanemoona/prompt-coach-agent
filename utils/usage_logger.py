@@ -5,7 +5,39 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-LOG_PATH = Path("logs") / "llm_usage.jsonl"
+LOG_DIR = Path("logs")
+APP_LOG_PATH = LOG_DIR / "app_usage.jsonl"
+EVALUATION_LOG_PATH = LOG_DIR / "evaluation_usage.jsonl"
+
+COMMON_FIELDS = (
+    "timestamp",
+    "source",
+    "session_id",
+    "turn_index",
+    "node",
+    "model",
+    "focus_element",
+    "input_chars",
+    "prompt_chars",
+    "state_chars",
+    "input_tokens",
+    "output_tokens",
+    "total_tokens",
+    "latency_ms",
+    "parse_success",
+    "success",
+    "error_type",
+    "error",
+)
+
+EVALUATION_FIELDS = (
+    "run_id",
+    "experiment",
+    "case_id",
+    *COMMON_FIELDS,
+)
+
+APP_FIELDS = COMMON_FIELDS
 
 
 def extract_usage(response: Any) -> dict[str, int | None]:
@@ -40,9 +72,21 @@ def empty_usage() -> dict[str, None]:
 
 
 def write_usage_log(record: dict[str, object]) -> None:
-    LOG_PATH.parent.mkdir(exist_ok=True)
-    with LOG_PATH.open("a", encoding="utf-8") as file:
-        file.write(json.dumps(record, ensure_ascii=False) + "\n")
+    path, fields = select_log_target(record)
+    path.parent.mkdir(exist_ok=True)
+    scoped_record = {field: record.get(field) for field in fields}
+
+    with path.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(scoped_record, ensure_ascii=False) + "\n")
+
+
+def select_log_target(
+    record: dict[str, object],
+) -> tuple[Path, tuple[str, ...]]:
+    if record.get("source") == "evaluation":
+        return EVALUATION_LOG_PATH, EVALUATION_FIELDS
+
+    return APP_LOG_PATH, APP_FIELDS
 
 
 def current_timestamp() -> str:

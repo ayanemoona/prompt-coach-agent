@@ -102,7 +102,7 @@ def main() -> None:
             skip_coach=args.skip_coach,
         )
 
-    print("Done. Usage logs were written to logs/llm_usage.jsonl.")
+    print("Done. Evaluation logs were written to logs/evaluation_usage.jsonl.")
 
 
 if __name__ == "__main__":
