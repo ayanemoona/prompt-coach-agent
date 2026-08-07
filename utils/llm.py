@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from utils.log_context import get_log_context
 from utils.usage_logger import current_timestamp, extract_usage, write_usage_log
 
 DEFAULT_MODEL = "gpt-4.1-mini"
@@ -38,31 +39,12 @@ def ask_llm(
     model: str = DEFAULT_MODEL,
     *,
     node: str = "unknown",
-    source: str = "app",
-    experiment: str | None = None,
-    run_id: str | None = None,
-    case_id: str | None = None,
-    session_id: str | None = None,
-    turn_index: int | None = None,
-    input_chars: int | None = None,
-    prompt_chars: int | None = None,
-    state_chars: int | None = None,
-    focus_element: str | None = None,
 ) -> str:
     response = invoke_with_usage_log(
         lambda: create_llm(model=model).invoke(prompt),
         model=model,
         node=node,
-        source=source,
-        experiment=experiment,
-        run_id=run_id,
-        case_id=case_id,
-        session_id=session_id,
-        turn_index=turn_index,
-        input_chars=input_chars,
-        prompt_chars=prompt_chars if prompt_chars is not None else len(prompt),
-        state_chars=state_chars,
-        focus_element=focus_element,
+        prompt_chars=len(prompt),
         structured=False,
     )
     return response.content
@@ -74,14 +56,6 @@ def ask_structured(
     model: str = DEFAULT_MODEL,
     *,
     node: str = "unknown",
-    source: str = "app",
-    experiment: str | None = None,
-    run_id: str | None = None,
-    case_id: str | None = None,
-    session_id: str | None = None,
-    turn_index: int | None = None,
-    input_chars: int | None = None,
-    prompt_chars: int | None = None,
 ) -> StructuredResult:
     usage_source = {"response": None}
 
@@ -108,16 +82,7 @@ def ask_structured(
         invoke,
         model=model,
         node=node,
-        source=source,
-        experiment=experiment,
-        run_id=run_id,
-        case_id=case_id,
-        session_id=session_id,
-        turn_index=turn_index,
-        input_chars=input_chars,
-        prompt_chars=prompt_chars if prompt_chars is not None else len(prompt),
-        state_chars=None,
-        focus_element=None,
+        prompt_chars=len(prompt),
         structured=True,
         usage_response_getter=lambda: usage_source["response"],
     )
@@ -128,16 +93,7 @@ def invoke_with_usage_log(
     *,
     model: str,
     node: str,
-    source: str,
-    experiment: str | None,
-    run_id: str | None,
-    case_id: str | None,
-    session_id: str | None,
-    turn_index: int | None,
-    input_chars: int | None,
     prompt_chars: int | None,
-    state_chars: int | None,
-    focus_element: str | None,
     structured: bool,
     usage_response_getter=None,
 ):
@@ -162,21 +118,22 @@ def invoke_with_usage_log(
         )
         usage_response = usage_override if usage_override is not None else response
         usage = extract_usage(usage_response)
+        context = get_log_context()
         write_usage_log(
             {
                 "timestamp": current_timestamp(),
-                "run_id": run_id,
-                "experiment": experiment,
-                "source": source,
-                "case_id": case_id,
-                "session_id": session_id,
-                "turn_index": turn_index,
+                "run_id": context.get("run_id"),
+                "experiment": context.get("experiment"),
+                "source": context.get("source", "app"),
+                "case_id": context.get("case_id"),
+                "session_id": context.get("session_id"),
+                "turn_index": context.get("turn_index"),
                 "node": node,
                 "model": model,
-                "focus_element": focus_element,
-                "input_chars": input_chars,
-                "prompt_chars": prompt_chars,
-                "state_chars": state_chars,
+                "focus_element": context.get("focus_element"),
+                "input_chars": context.get("input_chars"),
+                "prompt_chars": context.get("prompt_chars", prompt_chars),
+                "state_chars": context.get("state_chars"),
                 "input_tokens": usage.get("input_tokens"),
                 "output_tokens": usage.get("output_tokens"),
                 "total_tokens": usage.get("total_tokens"),

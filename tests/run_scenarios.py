@@ -59,6 +59,7 @@ def run_scenario(
     from models.initial_state import create_initial_state
     from nodes.analyzer import analyze_prompt
     from nodes.coach import create_coaching_message
+    from utils.log_context import logging_context
 
     case_id = scenario["case_id"]
     session_id = f"{experiment}_{case_id}"
@@ -68,25 +69,17 @@ def run_scenario(
 
     for index, prompt in enumerate(scenario["turns"], start=1):
         print(f"  turn {index}: {len(prompt)} chars")
-        state = analyze_prompt(
-            state,
-            prompt,
+        with logging_context(
             source="evaluation",
             experiment=experiment,
             case_id=case_id,
             session_id=session_id,
             turn_index=index,
-        )
+        ):
+            state = analyze_prompt(state, prompt)
 
-        if not skip_coach:
-            create_coaching_message(
-                state,
-                source="evaluation",
-                experiment=experiment,
-                case_id=case_id,
-                session_id=session_id,
-                turn_index=index,
-            )
+            if not skip_coach:
+                create_coaching_message(state)
 
 
 def main() -> None:

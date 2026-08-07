@@ -6,6 +6,7 @@ from models.state import PromptState
 from prompts.coach_prompt import COACH_PROMPT
 from utils.knowledge_loader import load_knowledge
 from utils.llm import ask_llm, is_llm_configured
+from utils.log_context import logging_context
 
 FOCUS_PRIORITY = (
     "goal",
@@ -19,15 +20,7 @@ FOCUS_PRIORITY = (
 )
 
 
-def create_coaching_message(
-    state: PromptState,
-    *,
-    source: str = "app",
-    experiment: str | None = None,
-    case_id: str | None = None,
-    session_id: str | None = None,
-    turn_index: int | None = None,
-) -> str:
+def create_coaching_message(state: PromptState) -> str:
     if not is_llm_configured():
         raise RuntimeError("OPENAI_API_KEY is not configured. Coach requires LLM.")
 
@@ -41,19 +34,12 @@ def create_coaching_message(
 
     knowledge = load_knowledge(focus)
     prompt, state_chars = build_coach_prompt(state, focus, knowledge)
-    return ask_llm(
-        prompt,
-        node="coach",
-        source=source,
-        experiment=experiment,
-        case_id=case_id,
-        session_id=session_id,
-        turn_index=turn_index,
-        input_chars=len(state.get("current_prompt") or ""),
-        prompt_chars=len(prompt),
-        state_chars=state_chars,
+    with logging_context(
         focus_element=focus,
-    )
+        input_chars=len(state.get("current_prompt") or ""),
+        state_chars=state_chars,
+    ):
+        return ask_llm(prompt, node="coach")
 
 
 def select_focus_element(state: PromptState) -> str | None:

@@ -8,6 +8,7 @@ from models.initial_state import create_initial_state
 from nodes.analyzer import analyze_prompt
 from nodes.coach import create_coaching_message
 from nodes.reviewer import review_prompt_progress
+from utils.log_context import logging_context
 
 
 def create_session_id() -> str:
@@ -69,18 +70,13 @@ def render_initial_input() -> None:
 
         with st.spinner("프롬프트를 분석하는 중입니다..."):
             st.session_state["turn_index"] = 1
-            state = analyze_prompt(
-                st.session_state["state"],
-                prompt,
+            with logging_context(
                 session_id=st.session_state["session_id"],
                 turn_index=st.session_state["turn_index"],
-            )
-            st.session_state["state"] = state
-            st.session_state["coach_message"] = create_coaching_message(
-                state,
-                session_id=st.session_state["session_id"],
-                turn_index=st.session_state["turn_index"],
-            )
+            ):
+                state = analyze_prompt(st.session_state["state"], prompt)
+                st.session_state["state"] = state
+                st.session_state["coach_message"] = create_coaching_message(state)
             st.session_state["review_message"] = None
             st.rerun()
 
@@ -110,18 +106,15 @@ def render_workspace() -> None:
 
                 with st.spinner("수정된 프롬프트를 분석하는 중입니다..."):
                     st.session_state["turn_index"] += 1
-                    next_state = analyze_prompt(
-                        state,
-                        prompt,
+                    with logging_context(
                         session_id=st.session_state["session_id"],
                         turn_index=st.session_state["turn_index"],
-                    )
-                    st.session_state["state"] = next_state
-                    st.session_state["coach_message"] = create_coaching_message(
-                        next_state,
-                        session_id=st.session_state["session_id"],
-                        turn_index=st.session_state["turn_index"],
-                    )
+                    ):
+                        next_state = analyze_prompt(state, prompt)
+                        st.session_state["state"] = next_state
+                        st.session_state["coach_message"] = create_coaching_message(
+                            next_state
+                        )
                     st.session_state["review_message"] = None
                     st.rerun()
 
