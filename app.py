@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from models.initial_state import create_initial_state
 from nodes.analyzer import analyze_prompt
 from nodes.coach import create_coaching_message
@@ -19,11 +21,24 @@ def main() -> None:
         return
 
     state = create_initial_state()
-    state = analyze_prompt(state, user_prompt)
+    session_id = f"session_{uuid4().hex[:12]}"
+    turn_index = 1
+    state = analyze_prompt(
+        state,
+        user_prompt,
+        session_id=session_id,
+        turn_index=turn_index,
+    )
 
     while True:
         print()
-        print(create_coaching_message(state))
+        print(
+            create_coaching_message(
+                state,
+                session_id=session_id,
+                turn_index=turn_index,
+            )
+        )
         print()
 
         user_input = input("수정한 프롬프트 전체 입력: ").strip()
@@ -42,7 +57,13 @@ def main() -> None:
             print("빈 입력은 반영하지 않습니다.")
             continue
 
-        state = analyze_prompt(state, user_input)
+        turn_index += 1
+        state = analyze_prompt(
+            state,
+            user_input,
+            session_id=session_id,
+            turn_index=turn_index,
+        )
 
 
 if __name__ == "__main__":

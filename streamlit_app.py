@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 import streamlit as st
 
 from models.initial_state import create_initial_state
 from nodes.analyzer import analyze_prompt
 from nodes.coach import create_coaching_message
 from nodes.reviewer import review_prompt_progress
+
+
+def create_session_id() -> str:
+    return f"session_{uuid4().hex[:12]}"
 
 
 def main() -> None:
@@ -34,6 +40,12 @@ def ensure_session_state() -> None:
     if "state" not in st.session_state:
         st.session_state["state"] = create_initial_state()
 
+    if "session_id" not in st.session_state:
+        st.session_state["session_id"] = create_session_id()
+
+    if "turn_index" not in st.session_state:
+        st.session_state["turn_index"] = 0
+
     if "coach_message" not in st.session_state:
         st.session_state["coach_message"] = None
 
@@ -56,9 +68,19 @@ def render_initial_input() -> None:
             return
 
         with st.spinner("프롬프트를 분석하는 중입니다..."):
-            state = analyze_prompt(st.session_state["state"], prompt)
+            st.session_state["turn_index"] = 1
+            state = analyze_prompt(
+                st.session_state["state"],
+                prompt,
+                session_id=st.session_state["session_id"],
+                turn_index=st.session_state["turn_index"],
+            )
             st.session_state["state"] = state
-            st.session_state["coach_message"] = create_coaching_message(state)
+            st.session_state["coach_message"] = create_coaching_message(
+                state,
+                session_id=st.session_state["session_id"],
+                turn_index=st.session_state["turn_index"],
+            )
             st.session_state["review_message"] = None
             st.rerun()
 
@@ -87,10 +109,18 @@ def render_workspace() -> None:
                     return
 
                 with st.spinner("수정된 프롬프트를 분석하는 중입니다..."):
-                    next_state = analyze_prompt(state, prompt)
+                    st.session_state["turn_index"] += 1
+                    next_state = analyze_prompt(
+                        state,
+                        prompt,
+                        session_id=st.session_state["session_id"],
+                        turn_index=st.session_state["turn_index"],
+                    )
                     st.session_state["state"] = next_state
                     st.session_state["coach_message"] = create_coaching_message(
-                        next_state
+                        next_state,
+                        session_id=st.session_state["session_id"],
+                        turn_index=st.session_state["turn_index"],
                     )
                     st.session_state["review_message"] = None
                     st.rerun()
@@ -102,6 +132,8 @@ def render_workspace() -> None:
         with col_reset:
             if st.button("처음부터"):
                 st.session_state["state"] = create_initial_state()
+                st.session_state["session_id"] = create_session_id()
+                st.session_state["turn_index"] = 0
                 st.session_state["coach_message"] = None
                 st.session_state["review_message"] = None
                 st.rerun()
