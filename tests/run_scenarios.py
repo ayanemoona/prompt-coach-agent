@@ -71,6 +71,7 @@ def run_scenario(
         state = analyze_prompt(
             state,
             prompt,
+            source="evaluation",
             experiment=experiment,
             case_id=case_id,
             session_id=session_id,
@@ -80,6 +81,7 @@ def run_scenario(
         if not skip_coach:
             create_coaching_message(
                 state,
+                source="evaluation",
                 experiment=experiment,
                 case_id=case_id,
                 session_id=session_id,

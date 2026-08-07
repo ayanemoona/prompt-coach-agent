@@ -22,6 +22,7 @@ FOCUS_PRIORITY = (
 def create_coaching_message(
     state: PromptState,
     *,
+    source: str = "app",
     experiment: str | None = None,
     case_id: str | None = None,
     session_id: str | None = None,
@@ -43,6 +44,7 @@ def create_coaching_message(
     return ask_llm(
         prompt,
         node="coach",
+        source=source,
         experiment=experiment,
         case_id=case_id,
         session_id=session_id,
