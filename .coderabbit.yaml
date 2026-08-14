@@ -1,0 +1,146 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: ko-KR
+# 한국어로 리뷰를 받아야 바로 판단하기 쉬워서 ko-KR로 고정합니다.
+tone_instructions: >
+  개인 프로젝트의 실용적인 시니어 리뷰어처럼 답하세요. 칭찬은 짧게, 지적은 근거와 수정 방향을 함께 제시하고,
+  Python/LangGraph/Streamlit 특성상 상태 흐름, 예외 처리, 테스트 가능성, 보안 이슈를 우선하세요.
+# 우테코/팀 코치 페르소나는 이 프로젝트와 맞지 않아서, 개인 프로젝트를 봐주는 시니어 리뷰어 톤으로 바꿉니다.
+
+reviews:
+  # quiet은 너무 적게 말하고 assertive는 개인 프로젝트에서 피로도가 커질 수 있어, 균형형인 chill을 사용합니다.
+  profile: chill
+  # CodeRabbit이 자동 승인/변경요청 흐름을 장악하지 않게 하고, 최종 판단은 직접 하도록 둡니다.
+  request_changes_workflow: false
+  # PR 전체 의도를 빠르게 파악하려고 고수준 요약은 켭니다.
+  high_level_summary: true
+  # PR 본문보다 리뷰 코멘트 안에서 요약을 바로 보는 편이 개인 프로젝트 흐름에 편해서 켭니다.
+  high_level_summary_in_walkthrough: true
+  # 작은 Python 프로젝트에서 파일별 요약까지 켜면 리뷰가 길어져서 끕니다.
+  changed_files_summary: false
+  # LangGraph 흐름은 코드/문서로 이미 관리하고 있으므로, 자동 시퀀스 다이어그램은 노이즈를 줄이기 위해 끕니다.
+  sequence_diagrams: false
+  # 변경 규모를 감 잡는 데 도움이 되므로 리뷰 노력 추정은 켭니다.
+  estimate_code_review_effort: true
+  # 이슈를 연결해서 작업할 때 PR이 요구사항을 충족하는지 보려고 켭니다.
+  assess_linked_issues: true
+  # 개인 repo에서는 관련 이슈/PR 추천이 자주 노이즈가 되므로 끕니다.
+  related_issues: false
+  related_prs: false
+  # PR 분류에는 도움이 되지만, 실제 라벨 적용은 직접 결정하려고 제안만 켭니다.
+  suggested_labels: true
+  auto_apply_labels: false
+  # 개인 프로젝트라 리뷰어 추천/자동 배정은 필요 없어서 끕니다.
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  # 리뷰를 간결하게 유지하려고 시/운세 같은 장식성 출력은 끕니다.
+  poem: false
+  in_progress_fortune: false
+  # 리뷰 진행 상태는 확인해야 하므로 켜고, 세부 디버그성 정보는 길어져서 끕니다.
+  review_status: true
+  review_details: false
+
+  path_filters:
+    # lockfile, 로그, 가상환경, 캐시는 어디에 있든 리뷰 가치가 낮고 소음이 커서 제외합니다.
+    - "!**/uv.lock"
+    - "!**/logs/**"
+    - "!**/.uv-cache/**"
+    - "!**/.venv/**"
+    - "!**/__pycache__/**"
+
+  labeling_instructions:
+    # 개인 프로젝트에서 실제로 구분할 만한 작업 단위만 라벨 후보로 제한합니다.
+    - label: "agent"
+      instructions: "Apply when changes affect LangGraph nodes, prompt-analysis flow, or PromptState updates."
+    - label: "ui"
+      instructions: "Apply when changes affect Streamlit screens, session state, or user-facing text."
+    - label: "tests"
+      instructions: "Apply when changes add or update scenario tests, fixtures, or evaluation scripts."
+    - label: "docs"
+      instructions: "Apply when changes are limited to documentation or knowledge-base markdown."
+
+  path_instructions:
+    # 이 repo는 FE/BE 모노레포가 아니라 Python 에이전트 프로젝트라 디렉터리별 관심사를 따로 줍니다.
+    - path: "nodes/**"
+      instructions: |
+        - LangGraph 노드의 입출력 계약이 PromptState와 일관적인지 확인하세요.
+        - LLM 호출 결과가 비어 있거나 예상 형식이 아닐 때의 fallback과 에러 처리를 우선 리뷰하세요.
+        - 같은 프롬프트를 반복 분석할 때 original_prompt와 current_prompt가 의도치 않게 섞이지 않는지 확인하세요.
+        - 리뷰 코멘트는 실제 버그 가능성, 상태 불일치, 테스트로 검증 가능한 지점 위주로 남기세요.
+    - path: "models/**"
+      instructions: |
+        - Pydantic 모델과 TypedDict/상태 구조가 런타임 데이터와 맞는지 확인하세요.
+        - Optional 필드, 기본값, mutable 기본값, 직렬화 가능성 문제를 중점적으로 보세요.
+        - 상태 모델 변경 시 nodes, tests, Streamlit session_state와의 호환성을 함께 확인하세요.
+    - path: "prompts/**"
+      instructions: |
+        - 프롬프트 지침이 모델에게 모호하거나 서로 충돌하지 않는지 확인하세요.
+        - 사용자 프롬프트를 대신 작성하지 않고 질문/코칭을 제공한다는 제품 원칙을 지키는지 확인하세요.
+        - 한국어 출력 품질, 도메인별 예시의 구체성, 과도한 장문 응답 가능성을 리뷰하세요.
+    - path: "knowledge/**"
+      instructions: |
+        - 지식 파일은 코드처럼 동작에 영향을 주므로 변경 의도와 실제 코칭 결과의 연결을 확인하세요.
+        - 역할, 목표, 제약, 출력 형식 사이에 중복되거나 상충하는 지침이 없는지 보세요.
+        - 예시 추가 시 개인정보, API 키, 민감한 실제 사용자 데이터가 포함되지 않았는지 확인하세요.
+    - path: "streamlit_app.py"
+      instructions: |
+        - Streamlit session_state 초기화, rerun 흐름, 버튼 클릭 후 상태 갱신 순서를 중점 리뷰하세요.
+        - 사용자 입력이 비어 있거나 LLM 호출이 실패했을 때 UI가 멈추거나 잘못된 상태를 보여주지 않는지 확인하세요.
+        - 한글 UI 문자열이 깨지지 않는지, 사용자에게 노출되는 메시지가 제품 톤과 맞는지 확인하세요.
+    - path: "tests/**"
+      instructions: |
+        - 테스트/시나리오가 실제 코칭 흐름의 회귀를 잡을 수 있는지 확인하세요.
+        - 외부 LLM 호출에 의존해 불안정해질 가능성이 있으면 mock, fixture, skip 전략을 제안하세요.
+        - 변경된 노드나 프롬프트에 대응하는 최소한의 시나리오가 추가되었는지 확인하세요.
+    - path: "utils/**"
+      instructions: |
+        - API 키, 로그, 파일 경로, JSONL 저장 로직에서 민감정보 노출이나 실패 복구 문제가 없는지 확인하세요.
+        - LLM 래퍼 변경 시 타임아웃, 재시도, 환경변수 누락, 비용 증가 가능성을 함께 리뷰하세요.
+
+  auto_review:
+    # 개인 프로젝트는 PR마다 바로 피드백을 받는 편이 이득이라 자동 리뷰를 켭니다.
+    enabled: true
+    # 아직 정리 중인 draft PR까지 리뷰하지 않게 합니다.
+    drafts: false
+    # 새 커밋을 push했을 때 바뀐 부분만 다시 보게 해서 리뷰 최신성을 유지합니다.
+    auto_incremental_review: true
+    # 개인 PR에서 여러 번 고쳐도 자동 리뷰가 5커밋 이후 멈추지 않게 자동 pause를 비활성화합니다.
+    auto_pause_after_reviewed_commits: 0
+    # WIP/draft 제목은 아직 리뷰 준비가 안 된 것으로 보고 건너뜁니다.
+    ignore_title_keywords:
+      - "WIP"
+      - "draft"
+
+  finishing_touches:
+    # 필요할 때 CodeRabbit에게 문서화/테스트/자동수정을 맡길 수 있게 기본 도구는 열어둡니다.
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+    # 자동 단순화는 의도치 않은 리팩터링이 생길 수 있어 기본 비활성화합니다.
+    simplify:
+      enabled: false
+    # 코멘트 단위의 명시적 자동수정은 편해서 켭니다.
+    autofix:
+      enabled: true
+
+chat:
+  # PR 코멘트에서 대화할 때 매번 멘션하지 않아도 답하게 해 편의성을 높입니다.
+  auto_reply: true
+
+knowledge_base:
+  web_search:
+    # LangChain/Streamlit 등 라이브러리 정보가 바뀔 수 있어 최신 문서 검색을 허용합니다.
+    enabled: true
+  code_guidelines:
+    # CodeRabbit이 자동 감지하는 .github/copilot-instructions.md 등을 리뷰 기준으로 쓰게 합니다.
+    # docs/와 knowledge/는 코드 규칙 문서가 아니라 제품/프롬프트 지식이라 path_instructions에서 직접 다룹니다.
+    enabled: true
+  learnings:
+    # 개인 repo의 학습 내용이 다른 조직/repo로 퍼지지 않게 local로 제한합니다.
+    scope: local
+  issues:
+    # 이슈/PR 문맥도 현재 repo 안에서만 참고하도록 제한합니다.
+    scope: local
+  pull_requests:
+    scope: local
