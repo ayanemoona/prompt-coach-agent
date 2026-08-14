@@ -1,7 +1,10 @@
+from uuid import uuid4
+
 from models.initial_state import create_initial_state
 from nodes.analyzer import analyze_prompt
 from nodes.coach import create_coaching_message
 from nodes.reviewer import review_prompt_progress
+from utils.log_context import logging_context
 
 EXIT_COMMANDS = {"exit", "quit", "q", "종료"}
 REVIEW_COMMANDS = {"review", "리뷰", "done", "완료"}
@@ -19,11 +22,15 @@ def main() -> None:
         return
 
     state = create_initial_state()
-    state = analyze_prompt(state, user_prompt)
+    session_id = f"session_{uuid4().hex[:12]}"
+    turn_index = 1
+    with logging_context(session_id=session_id, turn_index=turn_index):
+        state = analyze_prompt(state, user_prompt)
 
     while True:
         print()
-        print(create_coaching_message(state))
+        with logging_context(session_id=session_id, turn_index=turn_index):
+            print(create_coaching_message(state))
         print()
 
         user_input = input("수정한 프롬프트 전체 입력: ").strip()
@@ -42,7 +49,9 @@ def main() -> None:
             print("빈 입력은 반영하지 않습니다.")
             continue
 
-        state = analyze_prompt(state, user_input)
+        turn_index += 1
+        with logging_context(session_id=session_id, turn_index=turn_index):
+            state = analyze_prompt(state, user_input)
 
 
 if __name__ == "__main__":

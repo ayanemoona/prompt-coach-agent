@@ -6,6 +6,7 @@ from models.state import PromptState
 from prompts.coach_prompt import COACH_PROMPT
 from utils.knowledge_loader import load_knowledge
 from utils.llm import ask_llm, is_llm_configured
+from utils.log_context import logging_context
 
 FOCUS_PRIORITY = (
     "goal",
@@ -32,8 +33,13 @@ def create_coaching_message(state: PromptState) -> str:
         )
 
     knowledge = load_knowledge(focus)
-    prompt = build_coach_prompt(state, focus, knowledge)
-    return ask_llm(prompt)
+    prompt, state_chars = build_coach_prompt(state, focus, knowledge)
+    with logging_context(
+        focus_element=focus,
+        input_chars=len(state.get("current_prompt") or ""),
+        state_chars=state_chars,
+    ):
+        return ask_llm(prompt, node="coach")
 
 
 def select_focus_element(state: PromptState) -> str | None:
@@ -45,10 +51,15 @@ def select_focus_element(state: PromptState) -> str | None:
     return None
 
 
-def build_coach_prompt(state: PromptState, focus: str, knowledge: str) -> str:
+def build_coach_prompt(
+    state: PromptState, focus: str, knowledge: str
+) -> tuple[str, int]:
     state_json = json.dumps(state, ensure_ascii=False, indent=2)
-    return COACH_PROMPT.format(
-        focus=focus,
-        knowledge=knowledge,
-        state=state_json,
+    return (
+        COACH_PROMPT.format(
+            focus=focus,
+            knowledge=knowledge,
+            state=state_json,
+        ),
+        len(state_json),
     )

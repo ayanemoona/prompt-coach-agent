@@ -13,6 +13,7 @@ from prompts.analyzer_prompt import (
     INITIAL_OUTPUT_SCHEMA,
 )
 from utils.llm import ask_structured, is_llm_configured
+from utils.log_context import logging_context
 from utils.state_updater import update_current_state, update_initial_state
 
 AnalysisSchema: TypeAlias = type[InitialAnalysis] | type[CurrentAnalysis]
@@ -26,7 +27,7 @@ def analyze_prompt(state: PromptState, user_input: str) -> PromptState:
 
 
 def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
-    next_state: PromptState = deepcopy(state)  # 복사본 수정
+    next_state: PromptState = deepcopy(state)
     next_state["original_prompt"] = user_prompt
     next_state["current_prompt"] = user_prompt
 
@@ -37,6 +38,7 @@ def analyze_initial_prompt(state: PromptState, user_prompt: str) -> PromptState:
                 INITIAL_OUTPUT_SCHEMA,
                 user_prompt,
                 InitialAnalysis,
+                node="analyzer.initial",
             )
             update_initial_state(next_state, analysis)
             return next_state
@@ -59,6 +61,7 @@ def analyze_user_revision(state: PromptState, user_input: str) -> PromptState:
                 CURRENT_OUTPUT_SCHEMA,
                 user_input,
                 CurrentAnalysis,
+                node="analyzer.revision",
             )
             update_current_state(next_state, analysis)
             return next_state
@@ -75,11 +78,14 @@ def run_analysis(
     output_schema: str,
     user_prompt: str,
     schema: AnalysisSchema,
+    *,
+    node: str,
 ) -> dict:
     llm_prompt = (
         ANALYZER_PROMPT.replace("{analysis_mode}", analysis_mode)
         .replace("{output_schema}", output_schema)
         .replace("{user_prompt}", user_prompt)
     )
-    response = ask_structured(llm_prompt, schema)
+    with logging_context(input_chars=len(user_prompt)):
+        response = ask_structured(llm_prompt, schema, node=node)
     return response.model_dump()
